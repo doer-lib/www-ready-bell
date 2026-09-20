@@ -1,3 +1,5 @@
+package com.example.readybell;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;

@@ -1,3 +1,5 @@
+package com.example.readybell;
+
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.SocketAddress;
 import io.vertx.mutiny.core.Vertx;

@@ -171,12 +171,17 @@
 
         <div class="tab-panels">
           <div class="tab-panel" role="tabpanel" id="panel-netcat" aria-labelledby="tab-netcat">
-            <p class="example-note">Terminal 1 — subscribe and wait:</p>
+            <p class="example-note">Terminal 1 — connect:</p>
             <div class="code-block">
-              <span class="file-label">terminal 1</span>
+              <span class="file-label">terminal 1 — connect</span>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-bash">nc -u ready-bell.com 3137
-Listen 3fa85f64-5717-4562-b3fc-2c963f66afa6 30</code></pre>
+              <pre><code class="language-bash">nc -u ready-bell.com 3137</code></pre>
+            </div>
+            <p class="example-note">Then type this line and press enter:</p>
+            <div class="code-block">
+              <span class="file-label">terminal 1 — input</span>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-plaintext">Listen 3fa85f64-5717-4562-b3fc-2c963f66afa6 30</code></pre>
             </div>
             <p class="example-note">You'll immediately see <code>Registered ...</code>. Leave it open.</p>
 
@@ -308,7 +313,9 @@ void main() throws Exception {
               <span class="file-label">ReadyBellService.java</span>
               <a class="raw-link" href="examples/ReadyBellService.java">View raw</a>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-java">import jakarta.annotation.PostConstruct;
+              <pre><code class="language-java">package com.example.readybell;
+
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import jakarta.enterprise.concurrent.ManagedExecutorService;
@@ -395,7 +402,9 @@ public class ReadyBellService {
               <span class="file-label">ReadyBellAsyncService.java</span>
               <a class="raw-link" href="examples/ReadyBellAsyncService.java">View raw</a>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-java">import io.smallrye.mutiny.Uni;
+              <pre><code class="language-java">package com.example.readybell;
+
+import io.smallrye.mutiny.Uni;
 import io.vertx.core.SocketAddress;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
