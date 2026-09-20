@@ -3,8 +3,8 @@
   --bg-alt: #f6f7f9;
   --surface: #ffffff;
   --border: #e2e5ea;
-  --text: #14161a;
-  --text-secondary: #565c66;
+  --text: #0a0b0d;
+  --text-secondary: #33373f;
   --accent: #d97706;
   --accent-strong: #b45309;
   --accent-soft: #fef3c7;
@@ -23,8 +23,8 @@
     --bg-alt: #111418;
     --surface: #14171c;
     --border: #262b33;
-    --text: #eef0f3;
-    --text-secondary: #9aa2ad;
+    --text: #fbfbfc;
+    --text-secondary: #d3d7dd;
     --accent: #f5a524;
     --accent-strong: #ffb84d;
     --accent-soft: rgba(245, 165, 36, 0.14);
