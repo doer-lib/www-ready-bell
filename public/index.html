@@ -73,27 +73,30 @@
             </defs>
 
             <text x="90" y="20" text-anchor="middle" class="lifeline-label">Listener</text>
-            <text x="360" y="20" text-anchor="middle" class="lifeline-label">Server</text>
+            <text x="360" y="20" text-anchor="middle" class="lifeline-label">ready-bell.com:3137</text>
             <text x="630" y="20" text-anchor="middle" class="lifeline-label">Notifier</text>
 
             <line x1="90" y1="34" x2="90" y2="208" class="lifeline" />
             <line x1="360" y1="34" x2="360" y2="208" class="lifeline" />
             <line x1="630" y1="34" x2="630" y2="208" class="lifeline" />
 
+            <rect x="354" y="56" width="12" height="40" class="activation" />
+            <rect x="354" y="132" width="12" height="72" class="activation" />
+
             <text x="225" y="52" text-anchor="middle" class="msg-label">Listen uuid 30</text>
-            <line x1="90" y1="60" x2="360" y2="60" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="90" y1="60" x2="352" y2="60" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="225" y="84" text-anchor="middle" class="msg-label">Registered uuid ip port 30</text>
-            <line x1="360" y1="92" x2="90" y2="92" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="354" y1="92" x2="90" y2="92" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="495" y="128" text-anchor="middle" class="msg-label">Notify uuid</text>
-            <line x1="630" y1="136" x2="360" y2="136" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="630" y1="136" x2="368" y2="136" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="225" y="160" text-anchor="middle" class="msg-label">Ready uuid</text>
-            <line x1="360" y1="168" x2="90" y2="168" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="354" y1="168" x2="90" y2="168" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="495" y="192" text-anchor="middle" class="msg-label">Notified uuid 1</text>
-            <line x1="360" y1="200" x2="630" y2="200" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="366" y1="200" x2="630" y2="200" class="msg-line" marker-end="url(#arrow)" />
           </svg>
         </div>
       </div>
@@ -200,7 +203,10 @@
           </div>
 
           <div class="tab-panel" role="tabpanel" id="panel-node" aria-labelledby="tab-node" hidden>
-            <p class="example-note">Run this in one terminal, then the notifier in another.</p>
+            <ul class="example-steps">
+              <li>Run <code>node listener.js</code> in one terminal</li>
+              <li>Run <code>node notifier.js</code> in second terminal</li>
+            </ul>
             <div class="code-block">
               <span class="file-label">listener.js</span>
               <a class="raw-link" href="examples/listener.js">View raw</a>
@@ -228,7 +234,10 @@ socket.send(`Notify ${uuid}`, 3137, "ready-bell.com");</code></pre>
           </div>
 
           <div class="tab-panel" role="tabpanel" id="panel-python" aria-labelledby="tab-python" hidden>
-            <p class="example-note">Run <code>listener.py</code> in one terminal, then <code>notifier.py</code> in another.</p>
+            <ul class="example-steps">
+              <li>Run <code>python listener.py</code> in one terminal</li>
+              <li>Run <code>python notifier.py</code> in second terminal</li>
+            </ul>
             <div class="code-block">
               <span class="file-label">listener.py</span>
               <a class="raw-link" href="examples/listener.py">View raw</a>
@@ -261,7 +270,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
           </div>
 
           <div class="tab-panel" role="tabpanel" id="panel-java" aria-labelledby="tab-java" hidden>
-            <p class="example-note">Run <code>java listener.java</code> in one terminal, then <code>java notifier.java</code> in another.</p>
+            <ul class="example-steps">
+              <li>Run <code>java listener.java</code> in one terminal</li>
+              <li>Run <code>java notifier.java</code> in second terminal</li>
+            </ul>
             <div class="code-block">
               <span class="file-label">listener.java</span>
               <a class="raw-link" href="examples/listener.java">View raw</a>
@@ -346,14 +358,10 @@ public class ReadyBellService {
     private ManagedExecutorService executor;
 
     @PostConstruct
-    public void init() {
-        try {
-            socket = new DatagramSocket();
-            executor.submit(this::listenLoop);
-            log.info(() -> "ReadyBellService bound to port: " + socket.getLocalPort());
-        } catch (SocketException e) {
-            throw new RuntimeException("Failed to initialize UDP socket", e);
-        }
+    public void init() throws SocketException {
+        socket = new DatagramSocket();
+        executor.submit(this::listenLoop);
+        log.info(() -> "ReadyBellService bound to port: " + socket.getLocalPort());
     }
 
     private void listenLoop() {

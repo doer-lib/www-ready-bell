@@ -308,6 +308,12 @@ a {
   fill: var(--accent-strong);
 }
 
+.activation {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
 /* Protocol table */
 
 .table-wrap {
@@ -458,6 +464,17 @@ code {
   color: var(--text-secondary);
   font-size: 0.92rem;
   margin: -6px 0 18px;
+}
+
+.example-steps {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  margin: -6px 0 18px;
+  padding-left: 20px;
+}
+
+.example-steps li {
+  margin: 2px 0;
 }
 
 /* Footer */
