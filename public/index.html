@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ready-bell — one-shot UDP notifications</title>
+  <meta name="description" content="ready-bell is a hosted, one-shot UDP notification service at ready-bell.com:3137. Subscribe to a UUID, get notified the instant it's ready — no broker, no polling infrastructure." />
+  <link rel="canonical" href="https://www.ready-bell.com/" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M16 6c-1 0-1.8.8-1.8 1.8v.7c-3 .7-5.2 3.4-5.2 6.6v4.4l-1.6 2.4c-.3.5.03 1.1.6 1.1h16c.57 0 .9-.6.6-1.1L23 19.5v-4.4c0-3.2-2.2-5.9-5.2-6.6v-.7C17.8 6.8 17 6 16 6z" fill="currentColor" />
+          <path d="M13.2 23.6a2.8 2.8 0 0 0 5.6 0z" fill="currentColor" />
+        </svg>
+        ready-bell
+      </a>
+      <nav class="site-nav">
+        <a href="#how-it-works">How it works</a>
+        <a href="#protocol">Protocol</a>
+        <a href="#examples">Examples</a>
+      </nav>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="container">
+        <p class="pill">ready-bell.com:3137 · UDP</p>
+        <h1>Know the instant your result is ready.</h1>
+        <p class="lead">
+          ready-bell is a tiny one-shot UDP notification service. Subscribe to a UUID, keep
+          polling on your normal schedule as a fallback, and get pushed a single
+          <code>Ready</code> packet the moment the answer is available — no broker, no
+          persistence, no extra infrastructure to run.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#examples">See how it works</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section">
+      <div class="container">
+        <h2>How it works</h2>
+        <p class="section-intro">
+          A Listener subscribes to a UUID. Later, a Notifier tells the server that UUID's
+          result is ready. The server fires a single <code>Ready</code> packet to every
+          Listener currently subscribed — nothing to install, nothing to keep running besides
+          your own client code.
+        </p>
+
+        <div class="diagram-wrap">
+          <svg viewBox="0 0 720 224" role="img" aria-labelledby="diagram-title">
+            <title id="diagram-title">Sequence diagram of the ready-bell protocol between a Listener client, the server, and a Notifier client</title>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="msg-arrowhead"></path>
+              </marker>
+            </defs>
+
+            <text x="90" y="20" text-anchor="middle" class="lifeline-label">Listener</text>
+            <text x="360" y="20" text-anchor="middle" class="lifeline-label">Server</text>
+            <text x="630" y="20" text-anchor="middle" class="lifeline-label">Notifier</text>
+
+            <line x1="90" y1="34" x2="90" y2="208" class="lifeline" />
+            <line x1="360" y1="34" x2="360" y2="208" class="lifeline" />
+            <line x1="630" y1="34" x2="630" y2="208" class="lifeline" />
+
+            <text x="225" y="52" text-anchor="middle" class="msg-label">Listen uuid 30</text>
+            <line x1="90" y1="60" x2="360" y2="60" class="msg-line" marker-end="url(#arrow)" />
+
+            <text x="225" y="84" text-anchor="middle" class="msg-label">Registered uuid ip port 30</text>
+            <line x1="360" y1="92" x2="90" y2="92" class="msg-line" marker-end="url(#arrow)" />
+
+            <text x="495" y="128" text-anchor="middle" class="msg-label">Notify uuid</text>
+            <line x1="630" y1="136" x2="360" y2="136" class="msg-line" marker-end="url(#arrow)" />
+
+            <text x="225" y="160" text-anchor="middle" class="msg-label">Ready uuid</text>
+            <line x1="360" y1="168" x2="90" y2="168" class="msg-line" marker-end="url(#arrow)" />
+
+            <text x="495" y="192" text-anchor="middle" class="msg-label">Notified uuid 1</text>
+            <line x1="360" y1="200" x2="630" y2="200" class="msg-line" marker-end="url(#arrow)" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section id="protocol" class="section section-alt">
+      <div class="container">
+        <h2>Protocol reference</h2>
+        <p class="section-intro">
+          ready-bell speaks UTF-8 plain-text messages over UDP. Each datagram carries exactly
+          one command or response.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Initiator</th>
+                <th>Message</th>
+                <th>Response</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Listener client → Server</td>
+                <td><code>Listen &lt;uuid&gt; &lt;ttlSeconds&gt;</code></td>
+                <td><code>Registered &lt;uuid&gt; &lt;ip&gt; &lt;port&gt; &lt;ttlSeconds&gt;</code></td>
+                <td>Subscribe to a UUID for up to <code>ttlSeconds</code> seconds. The subscription is one-shot and is removed when <code>Ready</code> is sent or the TTL expires. <code>&lt;ip&gt;</code> and <code>&lt;port&gt;</code> are the UDP source address observed by the server.</td>
+              </tr>
+              <tr>
+                <td>Notifier client → Server</td>
+                <td><code>Notify &lt;uuid&gt;</code></td>
+                <td><code>Notified &lt;uuid&gt; &lt;n&gt;</code></td>
+                <td>Notify all currently subscribed Listener clients. <code>&lt;n&gt;</code> is the number of notification packets sent.</td>
+              </tr>
+              <tr>
+                <td>Server → Listener client</td>
+                <td><code>Ready &lt;uuid&gt;</code></td>
+                <td>—</td>
+                <td>One-shot notification sent to every Listener subscribed to the UUID.</td>
+              </tr>
+              <tr>
+                <td>Any client → Server</td>
+                <td>Invalid command</td>
+                <td><code>Error: &lt;reason&gt;</code></td>
+                <td>The command could not be parsed or validated.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="note">
+          Multiple Listener clients can subscribe to the same UUID — a <code>Notify</code> sends
+          <code>Ready</code> to all of them. ready-bell runs over UDP and provides no delivery
+          guarantees: commands, responses, and notifications may be lost, duplicated, or
+          reordered. A <code>Notified</code> response only confirms the server attempted to send
+          the notification, not that it arrived — keep your regular re-check schedule running as
+          the fallback, and treat <code>Ready</code> purely as a hint to check sooner.
+        </p>
+      </div>
+    </section>
+
+    <section id="examples" class="section">
+      <div class="container">
+        <h2>Code examples</h2>
+        <p class="section-intro">
+          Every example below talks to the live service at <code>ready-bell.com:3137</code> —
+          nothing to run or host yourself. They all use the same example UUID,
+          <code>3fa85f64-5717-4562-b3fc-2c963f66afa6</code>, to make it easy to follow along.
+        </p>
+
+        <div class="tabs" role="tablist" aria-label="Code examples by language">
+          <button class="tab" role="tab" id="tab-netcat" aria-controls="panel-netcat" aria-selected="true" tabindex="0">Command line</button>
+          <button class="tab" role="tab" id="tab-node" aria-controls="panel-node" aria-selected="false" tabindex="-1">Node.js</button>
+          <button class="tab" role="tab" id="tab-python" aria-controls="panel-python" aria-selected="false" tabindex="-1">Python</button>
+          <button class="tab" role="tab" id="tab-java" aria-controls="panel-java" aria-selected="false" tabindex="-1">Java</button>
+          <button class="tab" role="tab" id="tab-quarkus" aria-controls="panel-quarkus" aria-selected="false" tabindex="-1">Quarkus</button>
+        </div>
+
+        <div class="tab-panels">
+          <div class="tab-panel" role="tabpanel" id="panel-netcat" aria-labelledby="tab-netcat">
+            <p class="example-note">Terminal 1 — subscribe and wait:</p>
+            <div class="code-block">
+              <span class="file-label">terminal 1</span>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-bash">nc -u ready-bell.com 3137
+Listen 3fa85f64-5717-4562-b3fc-2c963f66afa6 30</code></pre>
+            </div>
+            <p class="example-note">You'll immediately see <code>Registered ...</code>. Leave it open.</p>
+
+            <p class="example-note">Terminal 2 — notify:</p>
+            <div class="code-block">
+              <span class="file-label">terminal 2</span>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-bash">echo "Notify 3fa85f64-5717-4562-b3fc-2c963f66afa6" | nc -u -w1 ready-bell.com 3137</code></pre>
+            </div>
+            <p class="example-note">This prints <code>Notified ... 1</code>, and terminal 1 prints <code>Ready 3fa85f64-5717-4562-b3fc-2c963f66afa6</code>.</p>
+          </div>
+
+          <div class="tab-panel" role="tabpanel" id="panel-node" aria-labelledby="tab-node" hidden>
+            <p class="example-note">Run this in one terminal, then the notifier in another.</p>
+            <div class="code-block">
+              <span class="file-label">listener.js</span>
+              <a class="raw-link" href="examples/listener.js">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-javascript">import dgram from "dgram";
+
+const socket = dgram.createSocket("udp4");
+const uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+
+socket.on("message", msg => console.log(msg.toString().trim()));
+socket.send(`Listen ${uuid} 30`, 3137, "ready-bell.com");</code></pre>
+            </div>
+            <div class="code-block">
+              <span class="file-label">notifier.js</span>
+              <a class="raw-link" href="examples/notifier.js">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-javascript">import dgram from "dgram";
+
+const socket = dgram.createSocket("udp4");
+const uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+
+socket.once("message", msg => (console.log(msg.toString().trim()), socket.close()));
+socket.send(`Notify ${uuid}`, 3137, "ready-bell.com");</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" role="tabpanel" id="panel-python" aria-labelledby="tab-python" hidden>
+            <p class="example-note">Run <code>listener.py</code> in one terminal, then <code>notifier.py</code> in another.</p>
+            <div class="code-block">
+              <span class="file-label">listener.py</span>
+              <a class="raw-link" href="examples/listener.py">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-python">import socket
+
+uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+addr = ("ready-bell.com", 3137)
+
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+    s.sendto(f"Listen {uuid} 30".encode(), addr)
+    while True:
+        data, _ = s.recvfrom(512)
+        print(data.decode().strip())</code></pre>
+            </div>
+            <div class="code-block">
+              <span class="file-label">notifier.py</span>
+              <a class="raw-link" href="examples/notifier.py">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-python">import socket
+
+uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+addr = ("ready-bell.com", 3137)
+
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+    s.sendto(f"Notify {uuid}".encode(), addr)
+    data, _ = s.recvfrom(512)
+    print(data.decode().strip())</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" role="tabpanel" id="panel-java" aria-labelledby="tab-java" hidden>
+            <p class="example-note">Run <code>java listener.java</code> in one terminal, then <code>java notifier.java</code> in another.</p>
+            <div class="code-block">
+              <span class="file-label">listener.java</span>
+              <a class="raw-link" href="examples/listener.java">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-java">import java.net.*;
+
+void main() throws Exception {
+    var uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    var address = new InetSocketAddress("ready-bell.com", 3137);
+
+    try (var socket = new DatagramSocket()) {
+        var request = ("Listen " + uuid + " 30").getBytes();
+        socket.send(new DatagramPacket(request, request.length, address));
+
+        var packet = new DatagramPacket(new byte[512], 512);
+        while (true) {
+            socket.receive(packet);
+            System.out.println(new String(packet.getData(), 0, packet.getLength()).trim());
+        }
+    }
+}</code></pre>
+            </div>
+            <div class="code-block">
+              <span class="file-label">notifier.java</span>
+              <a class="raw-link" href="examples/notifier.java">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-java">import java.net.*;
+
+void main() throws Exception {
+    var uuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    var address = new InetSocketAddress("ready-bell.com", 3137);
+
+    try (var socket = new DatagramSocket()) {
+        var bytes = ("Notify " + uuid).getBytes();
+        socket.send(new DatagramPacket(bytes, bytes.length, address));
+
+        var packet = new DatagramPacket(new byte[512], 512);
+        socket.receive(packet);
+
+        System.out.println(new String(packet.getData(), 0, packet.getLength()));
+    }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" role="tabpanel" id="panel-quarkus" aria-labelledby="tab-quarkus" hidden>
+            <p class="example-note">
+              Drop-in integration points for a Quarkus service — they assume a Quarkus project
+              with the relevant extensions already set up (<code>quarkus-vertx</code> for the
+              async version), not complete standalone programs.
+            </p>
+            <p class="example-note">Synchronous, using a <code>ManagedExecutorService</code> and a blocking socket:</p>
+            <div class="code-block">
+              <span class="file-label">ReadyBellService.java</span>
+              <a class="raw-link" href="examples/ReadyBellService.java">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-java">import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Resource;
+import jakarta.enterprise.concurrent.ManagedExecutorService;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+@ApplicationScoped
+public class ReadyBellService {
+
+    private static final Logger log = Logger.getLogger(ReadyBellService.class.getName());
+    private final InetSocketAddress remoteServer = new InetSocketAddress("ready-bell.com", 3137);
+
+    private DatagramSocket socket;
+
+    @Resource
+    private ManagedExecutorService executor;
+
+    @PostConstruct
+    public void init() {
+        try {
+            socket = new DatagramSocket();
+            executor.submit(this::listenLoop);
+            log.info(() -> "ReadyBellService bound to port: " + socket.getLocalPort());
+        } catch (SocketException e) {
+            throw new RuntimeException("Failed to initialize UDP socket", e);
+        }
+    }
+
+    private void listenLoop() {
+        var buffer = new byte[512];
+        var packet = new DatagramPacket(buffer, buffer.length);
+
+        while (!socket.isClosed() && !Thread.currentThread().isInterrupted()) {
+            try {
+                socket.receive(packet);
+                String message = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8).trim();
+                log.info(() -> "Received UDP packet: " + message);
+
+                if (message.startsWith("Ready ")) {
+                    onReady(UUID.fromString(message.substring(6).trim()));
+                }
+            } catch (SocketException e) {
+                log.info("UDP socket closed, stopping listener.");
+                break;
+            } catch (Exception e) {
+                log.severe("UDP reader error: " + e.getMessage());
+            }
+        }
+    }
+
+    public void onReady(UUID uuid) {
+        // Place custom business logic here
+    }
+
+    public void sendListen(UUID uuid, int seconds) throws Exception {
+        var bytes = ("Listen " + uuid + " " + seconds).getBytes(StandardCharsets.UTF_8);
+        socket.send(new DatagramPacket(bytes, bytes.length, remoteServer));
+    }
+
+    public void sendNotify(UUID uuid) throws Exception {
+        var bytes = ("Notify " + uuid).getBytes(StandardCharsets.UTF_8);
+        socket.send(new DatagramPacket(bytes, bytes.length, remoteServer));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (socket != null && !socket.isClosed()) {
+            socket.close();
+            log.info("ReadyBellService UDP socket closed.");
+        }
+    }
+}</code></pre>
+            </div>
+
+            <p class="example-note">Asynchronous, using Vert.x/Mutiny:</p>
+            <div class="code-block">
+              <span class="file-label">ReadyBellAsyncService.java</span>
+              <a class="raw-link" href="examples/ReadyBellAsyncService.java">View raw</a>
+              <button class="copy-btn" type="button">Copy</button>
+              <pre><code class="language-java">import io.smallrye.mutiny.Uni;
+import io.vertx.core.SocketAddress;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.core.datagram.DatagramSocket;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+@ApplicationScoped
+public class ReadyBellAsyncService {
+
+    private static final Logger log = Logger.getLogger(ReadyBellAsyncService.class.getName());
+    private final SocketAddress remoteServer = SocketAddress.inetSocketAddress(3137, "ready-bell.com");
+
+    @Inject
+    Vertx vertx;
+
+    private DatagramSocket socket;
+
+    @PostConstruct
+    public void init() {
+        socket = vertx.createDatagramSocket();
+
+        socket.handler(packet -> {
+            String message = packet.data().toString(StandardCharsets.UTF_8).trim();
+            log.info(() -> "Received UDP packet: " + message);
+
+            if (message.startsWith("Ready ")) {
+                onReady(UUID.fromString(message.substring(6).trim()));
+            }
+        });
+
+        socket.listen(0, "0.0.0.0")
+                .subscribe().with(
+                        s -> log.info(() -> "ReadyBellAsyncService bound to port: " + s.localAddress().port()),
+                        e -> log.severe("Failed to initialize UDP socket: " + e.getMessage())
+                );
+    }
+
+    public void onReady(UUID uuid) {
+        // Place custom business logic here
+    }
+
+    public Uni&lt;Void&gt; sendListen(UUID uuid, int seconds) {
+        String msg = "Listen " + uuid + " " + seconds;
+        return socket.send(Buffer.buffer(msg), remoteServer.port(), remoteServer.host()).replaceWithVoid();
+    }
+
+    public Uni&lt;Void&gt; sendNotify(UUID uuid) {
+        String msg = "Notify " + uuid;
+        return socket.send(Buffer.buffer(msg), remoteServer.port(), remoteServer.host()).replaceWithVoid();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (socket != null) {
+            socket.close().subscribe().with(
+                    v -> log.info("ReadyBellAsyncService UDP socket closed."),
+                    e -> log.severe("Error closing UDP socket: " + e.getMessage())
+            );
+        }
+    }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>ready-bell — one-shot UDP notifications.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>
