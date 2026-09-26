@@ -4,14 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ready-bell — one-shot UDP notifications</title>
-  <meta name="description" content="ready-bell is a hosted, one-shot UDP notification service at ready-bell.com:3137. Subscribe to a UUID, get notified the instant it's ready — no broker, no polling infrastructure." />
+  <meta name="description" content="ready-bell is a hosted, one-shot UDP notification service at ready-bell.com:3137. Keep polling for results, and get a UDP packet the moment they're ready — no open connections, no extra endpoints, no broker." />
   <link rel="canonical" href="https://www.ready-bell.com/" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/site.webmanifest" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
@@ -23,7 +18,7 @@
           <path d="M16 6c-1 0-1.8.8-1.8 1.8v.7c-3 .7-5.2 3.4-5.2 6.6v4.4l-1.6 2.4c-.3.5.03 1.1.6 1.1h16c.57 0 .9-.6.6-1.1L23 19.5v-4.4c0-3.2-2.2-5.9-5.2-6.6v-.7C17.8 6.8 17 6 16 6z" fill="currentColor" />
           <path d="M13.2 23.6a2.8 2.8 0 0 0 5.6 0z" fill="currentColor" />
         </svg>
-        ready-bell
+        Ready Bell
       </a>
       <nav class="site-nav">
         <a href="#how-it-works">How it works</a>
@@ -40,12 +35,12 @@
     <section class="hero" id="top">
       <div class="container">
         <p class="pill">ready-bell.com:3137 · UDP</p>
-        <h1>Know the instant your result is ready.</h1>
+        <h1>Get results the moment they’re ready.</h1>
         <p class="lead">
-          ready-bell is a tiny one-shot UDP notification service. Subscribe to a UUID, keep
-          polling on your normal schedule as a fallback, and get pushed a single
-          <code>Ready</code> packet the moment the answer is available — no broker, no
-          persistence, no extra infrastructure to run.
+          Polling forces a trade-off between latency and wasted requests. Ready Bell removes it:
+          send <code>Listen &lt;uuid&gt; &lt;seconds&gt;</code>, receive
+          <code>Ready &lt;uuid&gt;</code>, then poll once. No open connections, no extra API
+          endpoints — just UDP.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="#examples">See examples</a>
@@ -57,9 +52,9 @@
       <div class="container">
         <h2>How it works</h2>
         <p class="section-intro">
-          A Listener subscribes to a UUID. Later, a Notifier tells the server that UUID's
-          result is ready. The server fires a single <code>Ready</code> packet to every
-          Listener currently subscribed — nothing to install, nothing to keep running besides
+          A Listener sends <code>Listen &lt;uuid&gt; &lt;seconds&gt;</code>. Later, a Notifier sends
+          <code>Notify &lt;uuid&gt;</code> when that UUID's result is ready. The server fires a
+          single <code>Ready &lt;uuid&gt;</code> packet to every Listener currently waiting on it — nothing to install, nothing to keep running besides
           your own client code.
         </p>
 
@@ -87,16 +82,16 @@
             <line x1="90" y1="60" x2="352" y2="60" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="225" y="84" text-anchor="middle" class="msg-label">Registered uuid ip port 30</text>
-            <line x1="354" y1="92" x2="90" y2="92" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="354" y1="92" x2="92" y2="92" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="495" y="128" text-anchor="middle" class="msg-label">Notify uuid</text>
             <line x1="630" y1="136" x2="368" y2="136" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="225" y="160" text-anchor="middle" class="msg-label">Ready uuid</text>
-            <line x1="354" y1="168" x2="90" y2="168" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="354" y1="168" x2="92" y2="168" class="msg-line" marker-end="url(#arrow)" />
 
             <text x="495" y="192" text-anchor="middle" class="msg-label">Notified uuid 1</text>
-            <line x1="366" y1="200" x2="630" y2="200" class="msg-line" marker-end="url(#arrow)" />
+            <line x1="366" y1="200" x2="628" y2="200" class="msg-line" marker-end="url(#arrow)" />
           </svg>
         </div>
       </div>
@@ -165,8 +160,7 @@
         <h2>Code examples</h2>
         <p class="section-intro">
           Every example below talks to the live service at <code>ready-bell.com:3137</code> —
-          nothing to run or host yourself. They all use the same example UUID,
-          <code>3fa85f64-5717-4562-b3fc-2c963f66afa6</code>, to make it easy to follow along.
+          nothing to run or host yourself.
         </p>
 
         <div class="tabs" role="tablist" aria-label="Code examples by language">
@@ -179,27 +173,25 @@
 
         <div class="tab-panels">
           <div class="tab-panel" role="tabpanel" id="panel-netcat" aria-labelledby="tab-netcat">
-            <p class="example-note">Terminal 1 — connect:</p>
+            <p class="example-note">Open two terminals and run this in each:</p>
             <div class="code-block">
-              <span class="file-label">terminal 1 — connect</span>
+              <span class="file-label">terminal 1 and 2</span>
               <button class="copy-btn" type="button">Copy</button>
               <pre><code class="language-bash">nc -u ready-bell.com 3137</code></pre>
             </div>
-            <p class="example-note">Then type this line and press enter:</p>
+            <p class="example-note">In the first terminal, type this line and press enter:</p>
             <div class="code-block">
-              <span class="file-label">terminal 1 — input</span>
+              <span class="file-label">terminal 1</span>
               <button class="copy-btn" type="button">Copy</button>
               <pre><code class="language-plaintext">Listen 3fa85f64-5717-4562-b3fc-2c963f66afa6 30</code></pre>
             </div>
-            <p class="example-note">You'll immediately see <code>Registered ...</code>. Leave it open.</p>
-
-            <p class="example-note">Terminal 2 — notify:</p>
+            <p class="example-note">It prints <code>Registered ...</code>. Within 30 seconds, type this in the second terminal:</p>
             <div class="code-block">
               <span class="file-label">terminal 2</span>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-bash">echo "Notify 3fa85f64-5717-4562-b3fc-2c963f66afa6" | nc -u -w1 ready-bell.com 3137</code></pre>
+              <pre><code class="language-plaintext">Notify 3fa85f64-5717-4562-b3fc-2c963f66afa6</code></pre>
             </div>
-            <p class="example-note">This prints <code>Notified ... 1</code>, and terminal 1 prints <code>Ready 3fa85f64-5717-4562-b3fc-2c963f66afa6</code>.</p>
+            <p class="example-note">Terminal 2 prints <code>Notified ... 1</code>, and terminal 1 prints <code>Ready 3fa85f64-5717-4562-b3fc-2c963f66afa6</code>.</p>
           </div>
 
           <div class="tab-panel" role="tabpanel" id="panel-node" aria-labelledby="tab-node" hidden>
@@ -321,170 +313,121 @@ void main() throws Exception {
 
           <div class="tab-panel" role="tabpanel" id="panel-quarkus" aria-labelledby="tab-quarkus" hidden>
             <p class="example-note">
-              Drop-in integration points for a Quarkus service — they assume a Quarkus project
-              with the relevant extensions already set up (<code>quarkus-vertx</code> for the
-              async version), not complete standalone programs.
+              Drop-in integration for a Quarkus service, taken from the
+              <a href="https://github.com/doer-lib/ready-bell-demo">ready-bell-demo</a> project.
+              Incoming <code>Ready</code> notifications are fired as CDI events — handle them with
+              <code>@Observes ReadyBellEvent</code>.
             </p>
-            <p class="example-note">Synchronous, using a <code>ManagedExecutorService</code> and a blocking socket:</p>
             <div class="code-block">
               <span class="file-label">ReadyBellService.java</span>
               <a class="raw-link" href="examples/ReadyBellService.java">View raw</a>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-java">package com.example.readybell;
+              <pre><code class="language-java">package readybell;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.annotation.Resource;
-import jakarta.enterprise.concurrent.ManagedExecutorService;
-import jakarta.enterprise.context.ApplicationScoped;
-
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.logging.Logger;
+import java.util.concurrent.Executor;
+
+import io.quarkus.logging.Log;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ReadyBellService {
 
-    private static final Logger log = Logger.getLogger(ReadyBellService.class.getName());
-    private final InetSocketAddress remoteServer = new InetSocketAddress("ready-bell.com", 3137);
+    private static final String REMOTE_HOST = "ready-bell.com";
+    private static final int REMOTE_PORT = 3137;
+
+    @Inject
+    Executor executor;
+
+    @Inject
+    Event&lt;ReadyBellEvent&gt; readyEvent;
 
     private DatagramSocket socket;
 
-    @Resource
-    private ManagedExecutorService executor;
-
     @PostConstruct
-    public void init() throws SocketException {
+    public void init() throws Exception {
         socket = new DatagramSocket();
-        executor.submit(this::listenLoop);
-        log.info(() -> "ReadyBellService bound to port: " + socket.getLocalPort());
+        executor.execute(this::listenLoop);
+        Log.infof("ReadyBellService bound to port: %s", socket.getLocalPort());
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (socket != null &amp;&amp; !socket.isClosed()) {
+            socket.close();
+            Log.info("ReadyBellService UDP socket closed.");
+        }
+    }
+
+    public boolean sendListen(UUID uuid, int seconds) {
+        return send("Listen " + uuid + " " + seconds);
+    }
+
+    public boolean sendNotify(UUID uuid) {
+        return send("Notify " + uuid);
+    }
+
+    private boolean send(String message) {
+        InetSocketAddress target = new InetSocketAddress(REMOTE_HOST, REMOTE_PORT);
+        if (target.isUnresolved()) {
+            Log.debugf("Failed to resolve %s, dropping message: %s", REMOTE_HOST, message);
+            return false;
+        }
+
+        try {
+            var bytes = message.getBytes(StandardCharsets.UTF_8);
+            socket.send(new DatagramPacket(bytes, bytes.length, target));
+            Log.debugf("Sent UDP packet: %s", message);
+            return true;
+        } catch (IOException e) {
+            Log.warnf(e, "Failed to send UDP packet: %s", message);
+            return false;
+        }
     }
 
     private void listenLoop() {
         var buffer = new byte[512];
         var packet = new DatagramPacket(buffer, buffer.length);
 
-        while (!socket.isClosed() && !Thread.currentThread().isInterrupted()) {
+        while (!socket.isClosed() &amp;&amp; !Thread.currentThread().isInterrupted()) {
             try {
                 socket.receive(packet);
-                String message = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8).trim();
-                log.info(() -> "Received UDP packet: " + message);
+                var message = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8).trim();
+                Log.debugf("Received UDP packet: %s", message);
 
                 if (message.startsWith("Ready ")) {
-                    onReady(UUID.fromString(message.substring(6).trim()));
+                    UUID uuid = UUID.fromString(message.substring("Ready ".length()).trim());
+                    readyEvent.fire(new ReadyBellEvent(uuid));
                 }
             } catch (SocketException e) {
-                log.info("UDP socket closed, stopping listener.");
+                Log.infof("UDP socket closed, stopping listener.");
                 break;
             } catch (Exception e) {
-                log.severe("UDP reader error: " + e.getMessage());
+                Log.errorf(e, "UDP reader error: %s", e.getMessage());
             }
-        }
-    }
-
-    public void onReady(UUID uuid) {
-        // Place custom business logic here
-    }
-
-    public void sendListen(UUID uuid, int seconds) throws Exception {
-        var bytes = ("Listen " + uuid + " " + seconds).getBytes(StandardCharsets.UTF_8);
-        socket.send(new DatagramPacket(bytes, bytes.length, remoteServer));
-    }
-
-    public void sendNotify(UUID uuid) throws Exception {
-        var bytes = ("Notify " + uuid).getBytes(StandardCharsets.UTF_8);
-        socket.send(new DatagramPacket(bytes, bytes.length, remoteServer));
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (socket != null && !socket.isClosed()) {
-            socket.close();
-            log.info("ReadyBellService UDP socket closed.");
         }
     }
 }</code></pre>
             </div>
-
-            <p class="example-note">Asynchronous, using Vert.x/Mutiny:</p>
             <div class="code-block">
-              <span class="file-label">ReadyBellAsyncService.java</span>
-              <a class="raw-link" href="examples/ReadyBellAsyncService.java">View raw</a>
+              <span class="file-label">ReadyBellEvent.java</span>
+              <a class="raw-link" href="examples/ReadyBellEvent.java">View raw</a>
               <button class="copy-btn" type="button">Copy</button>
-              <pre><code class="language-java">package com.example.readybell;
+              <pre><code class="language-java">package readybell;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.SocketAddress;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.core.datagram.DatagramSocket;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.logging.Logger;
 
-@ApplicationScoped
-public class ReadyBellAsyncService {
-
-    private static final Logger log = Logger.getLogger(ReadyBellAsyncService.class.getName());
-    private final SocketAddress remoteServer = SocketAddress.inetSocketAddress(3137, "ready-bell.com");
-
-    @Inject
-    Vertx vertx;
-
-    private DatagramSocket socket;
-
-    @PostConstruct
-    public void init() {
-        socket = vertx.createDatagramSocket();
-
-        socket.handler(packet -> {
-            String message = packet.data().toString(StandardCharsets.UTF_8).trim();
-            log.info(() -> "Received UDP packet: " + message);
-
-            if (message.startsWith("Ready ")) {
-                onReady(UUID.fromString(message.substring(6).trim()));
-            }
-        });
-
-        socket.listen(0, "0.0.0.0")
-                .subscribe().with(
-                        s -> log.info(() -> "ReadyBellAsyncService bound to port: " + s.localAddress().port()),
-                        e -> log.severe("Failed to initialize UDP socket: " + e.getMessage())
-                );
-    }
-
-    public void onReady(UUID uuid) {
-        // Place custom business logic here
-    }
-
-    public Uni&lt;Void&gt; sendListen(UUID uuid, int seconds) {
-        String msg = "Listen " + uuid + " " + seconds;
-        return socket.send(Buffer.buffer(msg), remoteServer.port(), remoteServer.host()).replaceWithVoid();
-    }
-
-    public Uni&lt;Void&gt; sendNotify(UUID uuid) {
-        String msg = "Notify " + uuid;
-        return socket.send(Buffer.buffer(msg), remoteServer.port(), remoteServer.host()).replaceWithVoid();
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (socket != null) {
-            socket.close().subscribe().with(
-                    v -> log.info("ReadyBellAsyncService UDP socket closed."),
-                    e -> log.severe("Error closing UDP socket: " + e.getMessage())
-            );
-        }
-    }
+public record ReadyBellEvent(UUID uuid) {
 }</code></pre>
             </div>
           </div>

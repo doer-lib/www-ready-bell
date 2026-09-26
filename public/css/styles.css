@@ -345,6 +345,11 @@ thead th {
   letter-spacing: 0.04em;
 }
 
+/* Meaning column */
+th:nth-child(4), td:nth-child(4) {
+  min-width: 280px;
+}
+
 tbody tr:last-child td {
   border-bottom: none;
 }
@@ -513,5 +518,29 @@ code {
 
   .hero {
     padding: 64px 0 48px;
+  }
+
+  /* Let the protocol table scroll edge-to-edge; the gutter shows only at the scroll ends */
+  .table-wrap {
+    margin: 0 -24px;
+    padding: 0 24px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  thead th:first-child {
+    border-top-left-radius: calc(var(--radius) - 1px);
+  }
+
+  thead th:last-child {
+    border-top-right-radius: calc(var(--radius) - 1px);
   }
 }
